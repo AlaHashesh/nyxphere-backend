@@ -1,0 +1,44 @@
+{
+  "name": "firebase-app-hosting-nextjs",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@firebase/auth": "^1.9.0",
+    "@headlessui/react": "^2.2.0",
+    "@heroicons/react": "^2.2.0",
+    "@hookform/resolvers": "^4.1.1",
+    "@tailwindcss/postcss": "^4.0.8",
+    "@tanstack/react-query": "^5.66.9",
+    "axios": "^1.7.9",
+    "firebase": "^11.3.1",
+    "firebase-admin": "^13.1.0",
+    "headlessui": "^0.0.0",
+    "next": "15.1.7",
+    "next-auth": "^5.0.0-beta.25",
+    "node-polyfill-webpack-plugin": "^4.1.0",
+    "postcss": "^8.5.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-dropzone": "^14.3.8",
+    "react-firebase-hooks": "^5.1.1",
+    "react-hook-form": "^7.54.2",
+    "react-hot-toast": "^2.5.2",
+    "tailwindcss": "^4.0.8",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "eslint": "^9.21.0",
+    "eslint-config-next": "15.1.7",
+    "process": "^0.11.10",
+    "typescript": "^5.7.3"
+  }
+}
