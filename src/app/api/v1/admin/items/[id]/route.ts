@@ -15,11 +15,19 @@ const RequestPayloadScheme = z.object({
   title: z.string().trim().min(1),
   categoryIds: z.array(z.string().min(1)).min(1),
   audio: z.string().min(1),
-  icon: z.string().min(1),
-  free: z.boolean().default(false),
+  icon: z.string().optional(),
+  image: z.string().optional(),
+  free: z.boolean(),
   categoryId: z.string().min(1),
+  isNew: z.boolean().default(false),
   isAmbient: z.boolean(),
-});
+})
+  .refine(data => {
+    return !data.isAmbient || (data.isAmbient && !!data.image);
+  }, {message: "image is required", path: ["image"]})
+  .refine(data => {
+    return data.isAmbient || (!data.isAmbient && !!data.icon);
+  }, {message: "icon is required", path: ["icon"]});
 
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 

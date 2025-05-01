@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 
 const allowedOrigins = [
   "https://backend.nyxphere.com",
-  "https://admin.nyxphere.com"
+  "https://admin.nyxphere.com",
 ];
 
 export async function middleware(req: NextRequest, res: NextResponse) {
