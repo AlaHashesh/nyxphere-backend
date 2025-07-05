@@ -1,5 +1,6 @@
 import { createCache } from "cache-manager";
 import { createKeyv } from "cacheable";
+// @ts-ignore
 import { DiskStore } from "cache-manager-fs-hash";
 
 const memoryStore = createKeyv({
@@ -14,3 +15,4 @@ const diskStore = new DiskStore({
 export const cache = createCache({
   stores: [memoryStore, diskStore]
 });
+
