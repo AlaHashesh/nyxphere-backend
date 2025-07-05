@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 const allowedOrigins = [
   "https://backend.nyxphere.com",
   "https://admin.nyxphere.com",
+  // "http://localhost:3001",
 ];
 
 export async function middleware(req: NextRequest, res: NextResponse) {

@@ -5,6 +5,8 @@ import { findById } from "@/app/services/categoryService";
 import { BadRequestError } from "@/errors/BadRequestError";
 import { withErrorHandler } from "@/utils/withErrorHandler";
 import { DocumentReference } from "@firebase/firestore";
+import { cache } from "@/lib/cache";
+import { withCacheableHandler } from "@/utils/withCacheableHandler";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -21,18 +23,18 @@ const RequestPayloadScheme = z.object({
   free: z.boolean(),
   categoryId: z.string().min(1),
   isNew: z.boolean().default(false),
-  isAmbient: z.boolean(),
+  isAmbient: z.boolean()
 })
   .refine(data => {
     return !data.isAmbient || (data.isAmbient && !!data.image);
-  }, {message: "image is required", path: ["image"]})
+  }, { message: "image is required", path: ["image"] })
   .refine(data => {
     return data.isAmbient || (!data.isAmbient && !!data.icon);
-  }, {message: "icon is required", path: ["icon"]});
+  }, { message: "icon is required", path: ["icon"] });
 
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 
-export const GET = withErrorHandler(async (_: NextRequest, { params }: Props) => {
+const getCategoryItemsHandler = async (_: NextRequest, { params }: Props) => {
   const { id } = await params;
   const { ref } = await findById(id);
 
@@ -56,14 +58,23 @@ export const GET = withErrorHandler(async (_: NextRequest, { params }: Props) =>
       image: item.image,
       free: Boolean(item.free),
       categoryId: id,
-      isNew: Boolean(item.isNew),
+      isNew: Boolean(item.isNew)
     };
   });
 
   return NextResponse.json(items, { status: 200 });
-});
+};
+export const GET = withErrorHandler(
+  withCacheableHandler(
+    async (_: NextRequest, { params }: Props) => {
+      const { id } = await params;
+      return `admin.${id}.items`;
+    },
+    getCategoryItemsHandler
+  )
+);
 
-export const POST = withErrorHandler(async (req: NextRequest, { params }: Props) => {
+const createItemHandler = async (req: NextRequest, { params }: Props) => {
   const { id } = await params;
   await findById(id);
 
@@ -97,5 +108,8 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: Props)
     categories: categories.map((doc) => doc.ref)
   });
 
+  await cache.clear();
   return NextResponse.json(newDocument, { status: 200 });
-});
+};
+
+export const POST = withErrorHandler(createItemHandler);

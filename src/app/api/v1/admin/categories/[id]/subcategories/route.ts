@@ -4,6 +4,8 @@ import { z } from "zod";
 import { findById } from "@/app/services/categoryService";
 import { withErrorHandler } from "@/utils/withErrorHandler";
 import { BadRequestError } from "@/errors/BadRequestError";
+import { withCacheableHandler } from "@/utils/withCacheableHandler";
+import { cache } from "@/lib/cache";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -17,7 +19,7 @@ const RequestPayloadScheme = z.object({
 
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 
-export const GET = withErrorHandler(async (_: NextRequest, { params }: Props) => {
+const getSubcategoriesHandler = async (_: NextRequest, { params }: Props) => {
   const { id } = await params;
   const { ref } = await findById(id);
   const categoriesSnapShot = await db.collection("categories")
@@ -34,9 +36,18 @@ export const GET = withErrorHandler(async (_: NextRequest, { params }: Props) =>
   });
 
   return NextResponse.json(categories, { status: 200 });
-});
+};
 
-export const POST = withErrorHandler(async (req: NextRequest, { params }: Props) => {
+export const GET = withErrorHandler(
+  withCacheableHandler(async (_: NextRequest, { params }: Props) => {
+      const { id } = await params;
+      return `admin.${id}.subcategories`;
+    },
+    getSubcategoriesHandler
+  )
+);
+
+const createSubcategoryHandler = async (req: NextRequest, { params }: Props) => {
   const { id } = await params;
   const { ref } = await findById(id);
 
@@ -59,5 +70,8 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: Props)
     parent: ref
   });
 
+  await cache.clear();
   return NextResponse.json(newDocument, { status: 200 });
-});
+};
+
+export const POST = withErrorHandler(createSubcategoryHandler);

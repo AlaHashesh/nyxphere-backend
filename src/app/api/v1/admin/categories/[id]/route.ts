@@ -14,7 +14,7 @@ const RequestPayloadScheme = z.object({
 
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 
-export const POST = withErrorHandler(async (req: NextRequest, { params }: Props) => {
+const handler = async (req: NextRequest, { params }: Props) => {
   const { id } = await params;
   const { ref, snapshot } = await findById(id);
 
@@ -35,4 +35,6 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: Props)
     title: payload.title
   };
   return NextResponse.json(newDocument, { status: 200 });
-});
+};
+
+export const POST = withErrorHandler(handler);

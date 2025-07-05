@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase/serverApp";
-import { withErrorHandler } from "@/utils/withErrorHandler";
 import { DocumentReference } from "@firebase/firestore";
 import { getFullUrl } from "@/utils/media";
+import { withErrorHandler } from "@/utils/withErrorHandler";
+import { withCacheableHandler } from "@/utils/withCacheableHandler";
 
-export const GET = withErrorHandler(async (_: NextRequest) => {
+const handler = async (_: NextRequest) => {
   const soundsCategoryRef = db.collection("categories").doc("sounds");
   const categoriesQuerySnapshot = await db.collection("categories")
     .where("parent", "==", soundsCategoryRef)
@@ -79,4 +80,6 @@ export const GET = withErrorHandler(async (_: NextRequest) => {
   ].filter(category => category.items.length > 0);
 
   return NextResponse.json(allCategories, { status: 200 });
-});
+};
+
+export const GET = withErrorHandler(withCacheableHandler("sounds", handler));

@@ -34,3 +34,5 @@ next-env.d.ts
 
 firebase-debug.log
 .env
+diskcache
+.yarn

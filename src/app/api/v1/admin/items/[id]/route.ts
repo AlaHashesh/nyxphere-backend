@@ -4,6 +4,7 @@ import { withErrorHandler } from "@/utils/withErrorHandler";
 import { findById } from "@/app/services/itemService";
 import { db } from "@/lib/firebase/serverApp";
 import { BadRequestError } from "@/errors/BadRequestError";
+import { cache } from "@/lib/cache";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -20,18 +21,18 @@ const RequestPayloadScheme = z.object({
   free: z.boolean(),
   categoryId: z.string().min(1),
   isNew: z.boolean().default(false),
-  isAmbient: z.boolean(),
+  isAmbient: z.boolean()
 })
   .refine(data => {
     return !data.isAmbient || (data.isAmbient && !!data.image);
-  }, {message: "image is required", path: ["image"]})
+  }, { message: "image is required", path: ["image"] })
   .refine(data => {
     return data.isAmbient || (!data.isAmbient && !!data.icon);
-  }, {message: "icon is required", path: ["icon"]});
+  }, { message: "icon is required", path: ["icon"] });
 
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 
-export const POST = withErrorHandler(async (req: NextRequest, { params }: Props) => {
+const handler = async (req: NextRequest, { params }: Props) => {
   const { id } = await params;
   const { ref } = await findById(id);
 
@@ -63,5 +64,8 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: Props)
     categories: categories.map((doc) => doc.ref)
   });
 
+  await cache.clear();
   return NextResponse.json(newDocument, { status: 200 });
-});
+};
+
+export const POST = withErrorHandler(handler);
