@@ -5,9 +5,10 @@ type FirebaseUser = {
   localId: string;
   email?: string;
   customAttributes?: string;
+  emailVerified: Date | null;
 }
 
-async function getIdToken(email: string, password: string) {
+export async function getIdToken(email: string, password: string) {
   const apiKey = process.env.FIREBASE_WEB_API_KEY;
   const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
 
@@ -80,7 +81,12 @@ export const { handlers, auth } = NextAuth({
           const user = await getUserData(email, credentials.password as string);
           if (user) {
             const customAttributes = JSON.parse(user.customAttributes ?? "{}");
-            return { id: user.localId, email: email, role: customAttributes?.role ?? "guest" };
+            return {
+              id: user.localId,
+              email: email,
+              role: customAttributes?.role ?? "guest",
+              emailVerified: user.emailVerified != null
+            };
           }
           return null;
         } catch (error) {

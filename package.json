@@ -15,9 +15,12 @@
     "cacheable": "^1.10.1",
     "firebase": "^11.5.0",
     "firebase-admin": "^13.2.0",
+    "google-auth-library": "^10.2.1",
+    "jsonwebtoken": "^9.0.2",
     "next": "^15.3.4",
     "next-auth": "^5.0.0-beta.29",
     "node-polyfill-webpack-plugin": "^4.1.0",
+    "stripe": "^18.4.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

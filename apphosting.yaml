@@ -24,3 +24,7 @@ env:
     secret: FIREBASE_WEB_API_KEY
   - variable: AUTH_SECRET
     secret: AUTH_SECRET
+  - variable: AUTH_SALT
+    secret: AUTH_SALT
+  - variable: GOOGLE_CLIENT_ID_SERVER
+    secret: GOOGLE_CLIENT_ID_SERVER
