@@ -4,8 +4,8 @@ import { z } from "zod";
 import { auth } from "@/lib/firebase/serverApp";
 import { getIdToken } from "@/auth";
 import { BadRequestError } from "@/errors/BadRequestError";
-import { encode, JWTEncodeParams } from "next-auth/jwt";
 import { OAuth2Client } from "google-auth-library";
+import { encode } from "@/lib/jwt";
 
 const credentialsRequestScheme = z.object({
   provider: z.literal("credentials"),
@@ -82,19 +82,12 @@ const handler = async (req: NextRequest) => {
   const user = {
     id: firebaseUser.uid,
     name: firebaseUser.displayName ?? firebaseUser.email,
-    email: firebaseUser.email,
+    email: firebaseUser.email!,
     emailVerified: firebaseUser.emailVerified,
     role: firebaseUser.customClaims?.role ?? "guest"
   };
 
-  const jwtEncodeRequest = {
-    secret: process.env.AUTH_SECRET,
-    salt: process.env.NODE_ENV === "production" ? `__Secure-${process.env.AUTH_SALT}` : process.env.AUTH_SALT,
-    token: user,
-    maxAge: 1
-  } as JWTEncodeParams;
-
-  const accessToken = await encode(jwtEncodeRequest);
+  const accessToken = await encode(user);
 
   return NextResponse.json({
     user: user,

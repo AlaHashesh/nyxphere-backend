@@ -1,35 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withErrorHandler } from "@/utils/withErrorHandler";
 import { z } from "zod";
-import { stripe } from "@/lib/stripe";
+import { createOrGetCustomer, stripe } from "@/lib/stripe";
 import { productIds, products } from "@/lib/constants";
 import { BadRequestError } from "@/errors/BadRequestError";
 import Stripe from "stripe";
-import { decode, getToken, JWT } from "@auth/core/jwt";
+import { getToken } from "@/lib/jwt";
+import { getProfile, hasAccessLevel, linkAccessLevel, revokeAccessLevel } from "@/lib/adapty";
 
 const RequestPayloadScheme = z.object({
-  productId: z.enum(Object.values(productIds) as [string, ...string[]]),
+  productId: z.enum(Object.values(productIds) as [string, ...string[]])
 });
 
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
-
-async function createOrGetCustomer(email: string) {
-  const existingCustomers = await stripe.customers.list({
-    email: email,
-    limit: 1
-  });
-
-  let customer;
-  if (existingCustomers.data.length > 0) {
-    customer = existingCustomers.data[0];
-  } else {
-    customer = await stripe.customers.create({
-      email: email
-    });
-  }
-
-  return customer;
-}
 
 async function createOrGetSubscription(customer: Stripe.Customer, priceId: string) {
   const existingSubscriptions = await stripe.subscriptions.list({
@@ -61,28 +44,7 @@ async function createOrGetSubscription(customer: Stripe.Customer, priceId: strin
 
 const handler = async (req: NextRequest) => {
 
-  const token = await getToken({
-    req, secret: process.env.AUTH_SECRET, decode: async (params) => {
-      try {
-        return await decode({
-          secret: process.env.AUTH_SECRET!,
-          salt: process.env.NODE_ENV === "production" ? `__Secure-${process.env.AUTH_SALT}` : process.env.AUTH_SALT!,
-          token: params.token
-        });
-      } catch (error) {
-        const e = error as {
-          payload?: JWT;
-        };
-        const payload = e.payload;
-        if (payload?.email != undefined) {
-          return payload;
-        }
-
-        return null;
-      }
-    }
-  });
-
+  const token = await getToken(req);
   const email = token?.email;
   if (email == undefined) {
     throw new BadRequestError("Invalid email");
@@ -96,6 +58,13 @@ const handler = async (req: NextRequest) => {
   const product = products.find(product => product.id === payload.productId);
   if (product === undefined) {
     throw new BadRequestError("Product not found");
+  }
+
+  const adaptyProfile = await getProfile(email);
+  if (hasAccessLevel(adaptyProfile)) {
+    return NextResponse.json({
+      premium: true
+    }, { status: 200 });
   }
 
   const customer = await createOrGetCustomer(email);
@@ -116,7 +85,45 @@ const handler = async (req: NextRequest) => {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
-      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      premium: subscription.status === "active"
+    }, { status: 200 });
+  } else {
+
+    const paymentIntents = await stripe.paymentIntents.search({
+      query: `customer:'${customer.id}' AND metadata['product_id']:'${product.id}' AND status:'succeeded'`,
+      limit: 1,
+      expand: ["data.latest_charge"]
+    });
+
+    if (paymentIntents.data.length > 0) {
+      const paymentIntent = paymentIntents.data[0];
+      const latestCharge = paymentIntent.latest_charge as Stripe.Charge;
+      await linkAccessLevel(email, {
+        access_level_id: "premium",
+        starts_at: new Date(latestCharge.created * 1000).toISOString(),
+        expires_at: null,
+      });
+      return NextResponse.json({
+        premium: true
+      }, { status: 200 });
+    }
+
+    const price = await stripe.prices.retrieve(product.stripe.priceId);
+    const paymentIntent = await stripe.paymentIntents.create({
+      customer: customer.id,
+      amount: price.unit_amount ?? 999,
+      currency: price.currency,
+      metadata: {
+        customer_user_id: customer.email,
+        product_id: product.id
+      }
+    });
+
+    return NextResponse.json({
+      clientSecret: paymentIntent.client_secret,
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      premium: false
     }, { status: 200 });
   }
 

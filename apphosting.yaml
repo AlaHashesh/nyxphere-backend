@@ -11,6 +11,10 @@ runConfig:
 env:
   - variable: NEXTAUTH_URL
     value: https://backend.nyxphere.com
+  - variable: STRIPE_PRICE_LIFETIME
+    value: lifetime
+  - variable: STRIPE_PRICE_YEARLY
+    value: 1 year
 
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
@@ -28,3 +32,5 @@ env:
     secret: AUTH_SALT
   - variable: GOOGLE_CLIENT_ID_SERVER
     secret: GOOGLE_CLIENT_ID_SERVER
+  - variable: ADAPTY_SECRET_KEY
+    secret: ADAPTY_SECRET_KEY

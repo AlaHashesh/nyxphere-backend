@@ -7,7 +7,7 @@ const allowedOrigins = [
   "https://admin.nyxphere.com",
 ];
 
-export async function middleware(req: NextRequest, res: NextResponse) {
+export async function proxy(req: NextRequest, res: NextResponse) {
   const origin = req.headers.get("Origin");
   let response = NextResponse.next();
   if (origin && allowedOrigins.includes(origin)) {

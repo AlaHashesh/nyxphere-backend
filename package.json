@@ -9,26 +9,26 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@firebase/auth": "^1.9.1",
-    "cache-manager": "^7.0.1",
-    "cache-manager-fs-hash": "^2.0.0",
-    "cacheable": "^1.10.1",
-    "firebase": "^11.5.0",
-    "firebase-admin": "^13.2.0",
-    "google-auth-library": "^10.2.1",
-    "jsonwebtoken": "^9.0.2",
-    "next": "^15.3.4",
-    "next-auth": "^5.0.0-beta.29",
+    "@firebase/auth": "^1.11.1",
+    "cache-manager": "^7.2.5",
+    "cache-manager-fs-hash": "^3.0.0",
+    "cacheable": "^2.3.0",
+    "firebase": "^12.6.0",
+    "firebase-admin": "^13.6.0",
+    "google-auth-library": "^10.5.0",
+    "jsonwebtoken": "^9.0.3",
+    "next": "^16.0.7",
+    "next-auth": "^5.0.0-beta.30",
     "node-polyfill-webpack-plugin": "^4.1.0",
-    "stripe": "^18.4.0",
-    "zod": "^3.24.2"
+    "stripe": "^20.0.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@types/node": "^24.0.7",
-    "@types/react": "19.1.8",
-    "eslint": "^9.23.0",
-    "eslint-config-next": "15.3.4",
+    "@types/node": "^24.10.1",
+    "@types/react": "19.2.7",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "16.0.7",
     "process": "^0.11.10",
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.3"
   }
 }
