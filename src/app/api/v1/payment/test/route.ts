@@ -6,7 +6,7 @@ import { productIds, products } from "@/lib/constants";
 import { BadRequestError } from "@/errors/BadRequestError";
 import Stripe from "stripe";
 import { getToken } from "@/lib/jwt";
-import { getProfile, hasAccessLevel, linkAccessLevel } from "@/lib/adapty";
+import { getProfile, hasAccessLevel, linkAccessLevel, revokeAccessLevel } from "@/lib/adapty";
 
 const RequestPayloadScheme = z.object({
   productId: z.enum(Object.values(productIds) as [string, ...string[]])
@@ -14,7 +14,7 @@ const RequestPayloadScheme = z.object({
 
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 
-async function createOrGetSubscription(customer: Stripe.Customer, priceId: string) {
+async function getSubscription(customer: Stripe.Customer, priceId: string) {
   const existingSubscriptions = await stripe.subscriptions.list({
     customer: customer.id,
     price: priceId,
@@ -26,25 +26,40 @@ async function createOrGetSubscription(customer: Stripe.Customer, priceId: strin
     return existingSubscriptions.data[0];
   }
 
-  return await stripe.subscriptions.create({
-    customer: customer.id,
-    items: [
-      {
-        price: priceId,
-        quantity: 1
-      }
-    ],
-    payment_behavior: "default_incomplete",
-    expand: ["latest_invoice.payments"],
-    metadata: {
-      customer_user_id: customer.email
-    }
-  });
+  return undefined;
 }
 
-const handler = async (req: NextRequest) => {
+const cancelSubscription = async (email: string) => {
+  const customer = await createOrGetCustomer(email);
+  if (!customer) {
+    return;
+  }
 
-  return NextResponse.json({"test":"Hello"}, { status: 200 });
+  const product = products.find(product => product.id === productIds.Yearly);
+  if (!product) {
+    return;
+  }
+
+  const subscription = await getSubscription(customer, product.stripe.priceId);
+  if (!subscription) {
+    return;
+  }
+
+  if (subscription.status !== 'canceled') {
+    await stripe.subscriptions.cancel(subscription.id);
+  }
+}
+
+const handler = async (_: NextRequest) => {
+  const email = "info@nyxphere.com";
+
+  await cancelSubscription(email);
+  await revokeAccessLevel(email, {
+    access_level_id: "premium"
+  });
+
+  const profile = await getProfile(email);
+  return NextResponse.json(profile, { status: 200 });
 };
 
 export const GET = withErrorHandler(handler);

@@ -6,7 +6,7 @@ import { productIds, products } from "@/lib/constants";
 import { BadRequestError } from "@/errors/BadRequestError";
 import Stripe from "stripe";
 import { getToken } from "@/lib/jwt";
-import { getProfile, hasAccessLevel, linkAccessLevel, revokeAccessLevel } from "@/lib/adapty";
+import { getProfile, hasAccessLevel, linkAccessLevel } from "@/lib/adapty";
 
 const RequestPayloadScheme = z.object({
   productId: z.enum(Object.values(productIds) as [string, ...string[]])
@@ -69,8 +69,10 @@ const handler = async (req: NextRequest) => {
 
   const customer = await createOrGetCustomer(email);
 
+  console.log(customer);
   if (product.stripe.type === "subscription") {
     const subscription = await createOrGetSubscription(customer, product.stripe.priceId);
+    console.log(2, subscription);
     const invoice = subscription.latest_invoice;
 
     if (invoice == null || typeof invoice === "string") {
@@ -102,7 +104,7 @@ const handler = async (req: NextRequest) => {
       await linkAccessLevel(email, {
         access_level_id: "premium",
         starts_at: new Date(latestCharge.created * 1000).toISOString(),
-        expires_at: null,
+        expires_at: null
       });
       return NextResponse.json({
         premium: true

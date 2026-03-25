@@ -13,7 +13,7 @@ type Props = {
 
 const RequestPayloadScheme = z.object({
   id: z.string()
-    .regex(/^[a-z-]+$/, "Only lowercase letters and dashes are allowed"),
+    .regex(/^[0-9a-z-]+$/, "Only lowercase letters and dashes are allowed"),
   title: z.string().trim().min(1)
 });
 

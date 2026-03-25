@@ -16,21 +16,16 @@ type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 
 const handler = async (req: NextRequest) => {
 
-  // const token = await getToken(req);
-  // const email = token?.email;
-  // if (email == undefined) {
-  //   throw new BadRequestError("Invalid email");
-  // }
-  //
-  // const payload: RequestPayload = await req.json();
-  // RequestPayloadScheme.parse({
-  //   ...payload
-  // });
-
-  const email = "info@nyxphere.com";
-  const payload = {
-    productId: "com.nyxphere.app.product.lifetime"
+  const token = await getToken(req);
+  const email = token?.email;
+  if (email == undefined) {
+    throw new BadRequestError("Invalid email");
   }
+
+  const payload: RequestPayload = await req.json();
+  RequestPayloadScheme.parse({
+    ...payload
+  });
 
   const product = products.find(product => product.id === payload.productId);
   if (product === undefined) {

@@ -7,6 +7,7 @@ import { withErrorHandler } from "@/utils/withErrorHandler";
 import { DocumentReference } from "@firebase/firestore";
 import { cache } from "@/lib/cache";
 import { withCacheableHandler } from "@/utils/withCacheableHandler";
+import { getFullUrl } from "@/utils/media";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -14,7 +15,7 @@ type Props = {
 
 const RequestPayloadScheme = z.object({
   id: z.string()
-    .regex(/^[a-z-]+$/, "Only lowercase letters and dashes are allowed"),
+    .regex(/^[0-9a-z-]+$/, "Only lowercase letters and dashes are allowed"),
   title: z.string().trim().min(1),
   categoryIds: z.array(z.string().min(1)).min(1),
   audio: z.string().min(1),
@@ -58,7 +59,12 @@ const getCategoryItemsHandler = async (_: NextRequest, { params }: Props) => {
       image: item.image,
       free: Boolean(item.free),
       categoryId: id,
-      isNew: Boolean(item.isNew)
+      isNew: Boolean(item.isNew),
+      preview: {
+        audio: getFullUrl(item.audio),
+        icon: getFullUrl(item.icon),
+        image: getFullUrl(item.image),
+      }
     };
   });
 
@@ -109,7 +115,14 @@ const createItemHandler = async (req: NextRequest, { params }: Props) => {
   });
 
   await cache.clear();
-  return NextResponse.json(newDocument, { status: 200 });
+  return NextResponse.json({
+    ...newDocument,
+    preview: {
+      audio: getFullUrl(newDocument.audio),
+      icon: getFullUrl(newDocument.icon),
+      image: getFullUrl(newDocument.image),
+    }
+  }, { status: 200 });
 };
 
 export const POST = withErrorHandler(createItemHandler);

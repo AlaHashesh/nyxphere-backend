@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { withErrorHandler } from "@/utils/withErrorHandler";
 import { findById } from "@/app/services/categoryService";
+import { cache } from "@/lib/cache";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -34,6 +35,8 @@ const handler = async (req: NextRequest, { params }: Props) => {
     id: id,
     title: payload.title
   };
+
+  await cache.clear();
   return NextResponse.json(newDocument, { status: 200 });
 };
 
