@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withErrorHandler } from "@/utils/withErrorHandler";
 import { z } from "zod";
-import { createOrGetCustomer, stripe } from "@/lib/stripe";
+import { createOrGetCustomer, getStripeClient } from "@/lib/stripe";
 import { productIds, products } from "@/lib/constants";
 import { BadRequestError } from "@/errors/BadRequestError";
 import Stripe from "stripe";
@@ -15,7 +15,7 @@ const RequestPayloadScheme = z.object({
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 
 async function createOrGetSubscription(customer: Stripe.Customer, priceId: string) {
-  const existingSubscriptions = await stripe.subscriptions.list({
+  const existingSubscriptions = await getStripeClient().subscriptions.list({
     customer: customer.id,
     price: priceId,
     expand: ["data.latest_invoice.payments"],
@@ -26,7 +26,7 @@ async function createOrGetSubscription(customer: Stripe.Customer, priceId: strin
     return existingSubscriptions.data[0];
   }
 
-  return await stripe.subscriptions.create({
+  return await getStripeClient().subscriptions.create({
     customer: customer.id,
     items: [
       {
@@ -84,7 +84,7 @@ const handler = async (req: NextRequest) => {
       throw new BadRequestError("Payment intent not found");
     }
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const paymentIntent = await getStripeClient().paymentIntents.retrieve(paymentIntentId);
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
@@ -92,7 +92,7 @@ const handler = async (req: NextRequest) => {
     }, { status: 200 });
   } else {
 
-    const paymentIntents = await stripe.paymentIntents.search({
+    const paymentIntents = await getStripeClient().paymentIntents.search({
       query: `customer:'${customer.id}' AND metadata['product_id']:'${product.id}' AND status:'succeeded'`,
       limit: 1,
       expand: ["data.latest_charge"]
@@ -111,8 +111,8 @@ const handler = async (req: NextRequest) => {
       }, { status: 200 });
     }
 
-    const price = await stripe.prices.retrieve(product.stripe.priceId);
-    const paymentIntent = await stripe.paymentIntents.create({
+    const price = await getStripeClient().prices.retrieve(product.stripe.priceId);
+    const paymentIntent = await getStripeClient().paymentIntents.create({
       customer: customer.id,
       amount: price.unit_amount ?? 999,
       currency: price.currency,

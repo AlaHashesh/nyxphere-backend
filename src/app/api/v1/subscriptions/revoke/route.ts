@@ -6,7 +6,7 @@ import { productIds, products } from "@/lib/constants";
 import { BadRequestError } from "@/errors/BadRequestError";
 import Stripe from "stripe";
 import { getToken } from "@/lib/jwt";
-import { createOrGetCustomer, stripe } from "@/lib/stripe";
+import { createOrGetCustomer, getStripeClient } from "@/lib/stripe";
 
 const RequestPayloadScheme = z.object({
   customerUserId: z.string().min(1)
@@ -15,7 +15,7 @@ const RequestPayloadScheme = z.object({
 type RequestPayload = z.infer<typeof RequestPayloadScheme>;
 
 async function getSubscription(customer: Stripe.Customer, priceId: string) {
-  const existingSubscriptions = await stripe.subscriptions.list({
+  const existingSubscriptions = await getStripeClient().subscriptions.list({
     customer: customer.id,
     price: priceId,
     expand: ["data.latest_invoice.payments"],
@@ -61,7 +61,7 @@ const handler = async (req: NextRequest) => {
     throw new BadRequestError("Subscription already cancelled");
   }
 
-  const cancelledSubscription = await stripe.subscriptions.update(subscription.id, {
+  const cancelledSubscription = await getStripeClient().subscriptions.update(subscription.id, {
     cancel_at_period_end: true
   });
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withErrorHandler } from "@/utils/withErrorHandler";
 import { z } from "zod";
-import { getCustomerByEmail, stripe } from "@/lib/stripe";
+import { getCustomerByEmail, getStripeClient } from "@/lib/stripe";
 import { productIds, products } from "@/lib/constants";
 import { BadRequestError } from "@/errors/BadRequestError";
 import { getToken } from "@/lib/jwt";
@@ -37,7 +37,7 @@ const handler = async (req: NextRequest) => {
   } else {
 
     const customer = await getCustomerByEmail(email);
-    const paymentIntents = await stripe.paymentIntents.search({
+    const paymentIntents = await getStripeClient().paymentIntents.search({
       query: `customer:'${customer.id}' AND metadata['product_id']:'${product.id}' AND status:'succeeded'`,
       limit: 1,
       expand: ["data.latest_charge"]
@@ -50,7 +50,7 @@ const handler = async (req: NextRequest) => {
     const paymentIntent = paymentIntents.data[0];
     const latestCharge = paymentIntent.latest_charge as Stripe.Charge;
     const startsAt = new Date(latestCharge.created * 1000).toISOString();
-     await linkAccessLevel(email, {
+    await linkAccessLevel(email, {
       access_level_id: "premium",
       starts_at: startsAt,
       expires_at: null
