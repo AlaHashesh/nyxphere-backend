@@ -52,11 +52,15 @@ const handler = async (_: NextRequest) => {
   const email = "info@nyxphere.com";
 
   await cancelSubscription(email);
-  await revokeAccessLevel(email, {
+  await revokeAccessLevel({
+    customerUserId: email
+  }, {
     access_level_id: "premium"
   });
 
-  const profile = await getProfile(email);
+  const profile = await getProfile({
+    customerUserId: email
+  });
   return NextResponse.json(profile, { status: 200 });
 };
 

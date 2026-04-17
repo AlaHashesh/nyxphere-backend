@@ -50,7 +50,9 @@ const handler = async (req: NextRequest) => {
     const paymentIntent = paymentIntents.data[0];
     const latestCharge = paymentIntent.latest_charge as Stripe.Charge;
     const startsAt = new Date(latestCharge.created * 1000).toISOString();
-    await linkAccessLevel(email, {
+    await linkAccessLevel({
+      customerUserId: email
+    }, {
       access_level_id: "premium",
       starts_at: startsAt,
       expires_at: null

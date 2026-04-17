@@ -60,7 +60,9 @@ const handler = async (req: NextRequest) => {
     throw new BadRequestError("Product not found");
   }
 
-  const adaptyProfile = await getProfile(email);
+  const adaptyProfile = await getProfile({
+    customerUserId: email
+  });
   if (hasAccessLevel(adaptyProfile)) {
     return NextResponse.json({
       premium: true
@@ -101,7 +103,9 @@ const handler = async (req: NextRequest) => {
     if (paymentIntents.data.length > 0) {
       const paymentIntent = paymentIntents.data[0];
       const latestCharge = paymentIntent.latest_charge as Stripe.Charge;
-      await linkAccessLevel(email, {
+      await linkAccessLevel({
+        customerUserId: email
+      }, {
         access_level_id: "premium",
         starts_at: new Date(latestCharge.created * 1000).toISOString(),
         expires_at: null

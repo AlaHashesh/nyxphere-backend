@@ -69,7 +69,9 @@ const handler = async (req: NextRequest) => {
     throw new BadRequestError("Error canceling subscription");
   }
 
-  const profile = await getProfile(email);
+  const profile = await getProfile({
+    customerUserId: email
+  });
   return NextResponse.json(profile, { status: 200 });
 };
 

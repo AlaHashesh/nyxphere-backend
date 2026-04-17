@@ -1,12 +1,3 @@
-const getHeaders = (customerUserId: string) => {
-  const myHeaders = new Headers();
-  myHeaders.append("Authorization", `Api-Key ${process.env.ADAPTY_SECRET_KEY}`);
-  myHeaders.append("adapty-customer-user-id", `${customerUserId}`);
-  myHeaders.append("Content-Type", "application/json");
-
-  return myHeaders;
-};
-
 type AdaptyAccessLevel = {
   access_level_id: string,
   starts_at: string,
@@ -33,10 +24,35 @@ type RevokeAccessLevelPayload = {
   access_level_id: "premium",
 }
 
-export const getProfile = async (customerUserId: string) => {
+type ProfileParams = {
+  customerUserId?: string,
+  profileId?: string,
+}
+
+const getHeaders = (params: ProfileParams) => {
+  const myHeaders = new Headers();
+  myHeaders.append("Authorization", `Api-Key ${process.env.ADAPTY_SECRET_KEY}`);
+  if (params.profileId && params.customerUserId) {
+    throw new Error("You can't specify both profileId and customerUserId");
+  }
+
+  if (params.profileId) {
+    myHeaders.append("adapty-profile-id", `${params.profileId}`);
+  }
+
+  if (params.customerUserId) {
+    myHeaders.append("adapty-customer-user-id", `${params.customerUserId}`);
+  }
+
+  myHeaders.append("Content-Type", "application/json");
+
+  return myHeaders;
+};
+
+export const getProfile = async (params: ProfileParams) => {
   return fetch("https://api.adapty.io/api/v2/server-side-api/profile/", {
     method: "GET",
-    headers: getHeaders(customerUserId),
+    headers: getHeaders(params),
     redirect: "follow"
   }).then(async response => {
     const jsonResponse = await response.json() as GetProfileResponse;
@@ -44,10 +60,10 @@ export const getProfile = async (customerUserId: string) => {
   });
 };
 
-export const grantAccessLevel = async (customerUserId: string, payload: GrantAccessLevelPayload) => {
+export const grantAccessLevel = async (params: ProfileParams, payload: GrantAccessLevelPayload) => {
   return fetch("https://api.adapty.io/api/v2/server-side-api/purchase/profile/grant/access-level/", {
     method: "POST",
-    headers: getHeaders(customerUserId),
+    headers: getHeaders(params),
     body: JSON.stringify(payload),
     redirect: "follow"
   })
@@ -57,17 +73,15 @@ export const grantAccessLevel = async (customerUserId: string, payload: GrantAcc
     });
 };
 
-export const revokeAccessLevel = async (customerUserId: string, payload: RevokeAccessLevelPayload) => {
+export const revokeAccessLevel = async (params: ProfileParams, payload: RevokeAccessLevelPayload) => {
   const requestBody = JSON.stringify({
     access_level_id: payload.access_level_id,
     revoke_at: new Date(Date.now() + 1000).toISOString().replace("Z", "")
   });
 
-  console.log(requestBody);
-
   return fetch("https://api.adapty.io/api/v2/server-side-api/purchase/profile/revoke/access-level/", {
     method: "POST",
-    headers: getHeaders(customerUserId),
+    headers: getHeaders(params),
     body: requestBody,
     redirect: "follow"
   })
@@ -103,8 +117,8 @@ export const hasAccessLevel = (profile?: AdaptyProfile) => {
   return false;
 };
 
-export const linkAccessLevel = async (customerUserId: string, payload: GrantAccessLevelPayload) => {
-  const profile = await getProfile(customerUserId);
+export const linkAccessLevel = async (params: ProfileParams, payload: GrantAccessLevelPayload) => {
+  const profile = await getProfile(params);
   if (profile == null) {
     throw new Error("Profile not found");
   }
@@ -113,5 +127,5 @@ export const linkAccessLevel = async (customerUserId: string, payload: GrantAcce
     return profile;
   }
 
-  return grantAccessLevel(customerUserId, payload);
+  return grantAccessLevel(params, payload);
 };

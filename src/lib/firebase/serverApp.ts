@@ -32,3 +32,4 @@ getApps().length === 0 ? createFirebaseAdminApp() : getApps()[0];
 export const db = admin.firestore();
 export const storage = admin.storage();
 export const auth = admin.auth();
+export const appCheck = admin.appCheck();
